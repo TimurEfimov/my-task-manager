@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow - Менеджер задач</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --secondary: #f8fafc;
+        --text: #1e293b;
+        --text-light: #64748b;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --border: #e2e8f0;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      }
+
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .app-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .app-header {
+        background: var(--primary);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .app-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .app-header p {
+        opacity: 0.9;
+        font-size: 1.1rem;
+      }
+
+      .app-content {
+        padding: 30px;
+      }
+
+      .section {
+        margin-bottom: 40px;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-title::before {
+        content: "•";
+        color: var(--primary);
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text);
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgb(99 102 241 / 0.1);
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: var(--secondary);
+        color: var(--text);
+        border: 2px solid var(--border);
+      }
+
+      .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+      }
+
+      .btn-success {
+        background: var(--success);
+        color: white;
+      }
+
+      .btn-danger {
+        background: var(--error);
+        color: white;
+      }
+
+      .search-section {
+        background: var(--secondary);
+        padding: 25px;
+        border-radius: 12px;
+        border-left: 4px solid var(--primary);
+      }
+
+      .search-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 15px;
+        align-items: end;
+      }
+
+      .tasks-grid {
+        display: grid;
+        gap: 20px;
+      }
+
+      .task-card {
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .task-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+      }
+
+      .task-card.done {
+        background: #f8fafc;
+        border-color: var(--success);
+      }
+
+      .task-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 12px;
+      }
+
+      .task-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+
+      .task-desc {
+        color: var(--text-light);
+        line-height: 1.5;
+        margin-bottom: 15px;
+      }
+
+      .task-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border);
+      }
+
+      .task-date {
+        font-size: 0.9rem;
+        color: var(--text-light);
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .task-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .status-todo {
+        background: #fef3c7;
+        color: #d97706;
+      }
+
+      .status-done {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .search-result {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 12px;
+        animation: slideDown 0.3s ease;
+      }
+
+      .result-found {
+        background: #d1fae5;
+        border: 2px solid var(--success);
+      }
+
+      .result-not-found {
+        background: #fef2f2;
+        border: 2px solid var(--error);
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-light);
+      }
+
+      .empty-state h3 {
+        margin-bottom: 10px;
+        color: var(--text);
+      }
+
+      @media (max-width: 768px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+
+        .search-form {
+          grid-template-columns: 1fr;
+        }
+
+        .task-meta {
+          flex-direction: column;
+          gap: 10px;
+          align-items: start;
+        }
+
+        .task-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="app-card">
+        <div class="app-header">
+          <h1>🚀 TaskFlow</h1>
+          <p>Управляйте своими задачами эффективно</p>
+        </div>
+
+        <div class="app-content">
+          <!-- Секция добавления задачи -->
+          <div class="section">
+            <h2 class="section-title">Добавить новую задачу</h2>
+            <form id="taskForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="title">Название задачи</label>
+                  <input
+                    type="text"
+                    id="title"
+                    placeholder="Что нужно сделать?"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="description">Описание</label>
+                  <input
+                    type="text"
+                    id="description"
+                    placeholder="Дополнительные детали..."
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  <span>➕ Добавить</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Секция поиска -->
+          <div class="section">
+            <div class="search-section">
+              <h2 class="section-title">🔍 Поиск задачи по ID</h2>
+              <form id="searchForm" class="search-form">
+                <div class="form-group">
+                  <input
+                    type="number"
+                    id="searchId"
+                    placeholder="Введите ID задачи"
+                    min="1"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn btn-secondary">
+                  <span>Найти задачу</span>
+                </button>
+              </form>
+              <div id="searchResult"></div>
+            </div>
+          </div>
+
+          <!-- Секция списка задач -->
+          <div class="section">
+            <h2 class="section-title">📋 Мои задачи</h2>
+            <div id="tasks" class="tasks-grid">
+              <!-- Задачи будут здесь -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Функция для загрузки и отображения задач
+      async function loadTasks() {
+        try {
+          const response = await fetch("/api/tasks");
+          const tasks = await response.json();
+          displayTasks(tasks);
+        } catch (error) {
+          console.error("Ошибка загрузки задач:", error);
+        }
+      }
+
+      // Функция для отображения задач
+      function displayTasks(tasks) {
+        const tasksContainer = document.getElementById("tasks");
+
+        if (tasks.length === 0) {
+          tasksContainer.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Пока нет задач</h3>
+                        <p>Добавьте первую задачу выше 👆</p>
+                    </div>
+                `;
+          return;
+        }
+
+        tasksContainer.innerHTML = tasks
+          .map(
+            (task) => `
+                <div class="task-card ${task.status === "done" ? "done" : ""}">
+                    <div class="task-header">
+                        <div style="flex: 1;">
+                            <div class="task-title">${task.title}</div>
+                            ${
+                              task.desc
+                                ? `<div class="task-desc">${task.desc}</div>`
+                                : ""
+                            }
+                        </div>
+                        <span class="task-status ${
+                          task.status === "done" ? "status-done" : "status-todo"
+                        }">
+                            ${
+                              task.status === "done"
+                                ? "✅ Выполнено"
+                                : "⏳ В работе"
+                            }
+                        </span>
+                    </div>
+                    <div class="task-meta">
+                        <div class="task-date">
+                            📅 Создано: ${new Date(
+                              task.createdat
+                            ).toLocaleString("ru-RU")}
+                        </div>
+                        <div class="task-actions">
+                            <button onclick="toggleTask(${
+                              task.id
+                            })" class="btn ${
+              task.status === "done" ? "btn-secondary" : "btn-success"
+            }">
+                                ${
+                                  task.status === "done"
+                                    ? "↶ Вернуть"
+                                    : "✓ Выполнить"
+                                }
+                            </button>
+                            <button onclick="deleteTask(${
+                              task.id
+                            })" class="btn btn-danger">
+                                🗑️ Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      // Функция для добавления новой задачи
+      document
+        .getElementById("taskForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const title = document.getElementById("title").value;
+          const description = document.getElementById("description").value;
+
+          if (!title.trim()) return;
+
+          try {
+            const response = await fetch("/api/tasks", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: title,
+                description: description,
+              }),
+            });
+
+            if (response.ok) {
+              // Очищаем форму и перезагружаем задачи
+              document.getElementById("title").value = "";
+              document.getElementById("description").value = "";
+              loadTasks();
+            }
+          } catch (error) {
+            console.error("Ошибка создания задачи:", error);
+          }
+        });
+
+      // Функция для поиска задачи по ID
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const id = document.getElementById("searchId").value;
+          const resultContainer = document.getElementById("searchResult");
+
+          try {
+            const response = await fetch(`/api/task?id=${id}`);
+
+            if (response.ok) {
+              const task = await response.json();
+              resultContainer.innerHTML = `
+                        <div class="search-result result-found">
+                            <h3 style="margin-bottom: 15px; color: var(--success);">✅ Задача найдена!</h3>
+                            <div class="task-card">
+                                <div class="task-title">${task.title}</div>
+                                ${
+                                  task.desc
+                                    ? `<div class="task-desc">${task.desc}</div>`
+                                    : ""
+                                }
+                                <div class="task-meta">
+                                    <div class="task-date">
+                                        📅 Создано: ${new Date(
+                                          task.createdat
+                                        ).toLocaleString("ru-RU")}
+                                    </div>
+                                    <span class="task-status ${
+                                      task.status === "done"
+                                        ? "status-done"
+                                        : "status-todo"
+                                    }">
+                                        ${
+                                          task.status === "done"
+                                            ? "✅ Выполнено"
+                                            : "⏳ В работе"
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            } else {
+              resultContainer.innerHTML = `
+                        <div class="search-result result-not-found">
+                            <h3 style="margin-bottom: 10px; color: var(--error);">❌ Задача не найдена</h3>
+                            <p>Задачи с ID ${id} не существует</p>
+                        </div>
+                    `;
+            }
+          } catch (error) {
+            console.error("Ошибка поиска:", error);
+            resultContainer.innerHTML = `
+                    <div class="search-result result-not-found">
+                        <h3 style="color: var(--error);">⚠️ Ошибка при поиске</h3>
+                        <p>Попробуйте еще раз</p>
+                    </div>
+                `;
+          }
+        });
+
+      // Функции для обновления и удаления (пока заглушки)
+      function toggleTask(id) {
+        alert("Функция выполнения/возврата будет добавлена позже! ID: " + id);
+      }
+
+      function deleteTask(id) {
+        if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
+          alert("Функция удаления будет добавлена позже! ID: " + id);
+        }
+      }
+
+      // Загружаем задачи при загрузке страницы
+      loadTasks();
+    </script>
+  </body>
+</html>
